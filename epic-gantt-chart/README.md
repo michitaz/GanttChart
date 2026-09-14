@@ -47,9 +47,9 @@ Covered by `EpicGanttControllerTest`.
 - Flow `Add_Project_Stages_And_Milestones` (screen flow hosting the builder LWC)
 - Permission set `Epic_Gantt_Chart_Access` (object, field, tab, Apex, and flow access)
 - Tabs + page layouts for all three objects
-- `profiles/Admin.profile-meta.xml` — **only** grants Admin FLS on a couple of fields
-  that would otherwise be invisible outside Apex (see gotchas). Review before deploying;
-  profile deploys merge into the target org's Admin profile.
+- `profiles/Admin.profile-meta.xml` — grants System Administrator FLS on every optional
+  field in the package (see *Field visibility* below). Review before deploying; profile
+  deploys merge into the target org's Admin profile rather than replacing it.
 
 ---
 
@@ -84,6 +84,33 @@ exists before the first milestone. Both reuse the edit modals via `isStageCreate
 objects and saves in one Apex call, then closes with `FlowNavigationFinishEvent`. All
 validation and DML live in Apex rather than declarative Create Records elements — Flow's
 dynamic-row support is much weaker.
+
+---
+
+## Field visibility
+
+Fields marked `<required>true</required>` (`Start_Date__c`, `End_Date__c`,
+`Stage_Owner__c`, `Due_Date__c`, `Milestone_Description__c`) are universally visible and
+carry no FLS rows at all. Every *optional* field needs an explicit grant, and all six get
+one from both the permission set and the Admin profile:
+
+| Field | On a layout | Permission set | Admin profile |
+| --- | --- | --- | --- |
+| `Epic__c.Account__c` | Epic | yes | yes |
+| `Epic__c.Description__c` | Epic | yes | yes |
+| `Project_Stage__c.Display_Order__c` | Project Stage | yes | yes |
+| `Project_Stage__c.Description__c` | Project Stage | yes | yes |
+| `Project_Stage__c.System__c` | — | yes | yes |
+| `Milestone__c.Sort_Order__c` | Milestone | yes | yes |
+
+Four of these were on page layouts without Admin FLS, so an admin who wasn't assigned the
+permission set opened those records and simply didn't see the fields. The chart itself was
+unaffected — Apex runs in system mode and ignores FLS — which is exactly what makes this
+class of gap easy to miss. Verify after any new field with:
+
+```bash
+sf data query -o <org> -q "SELECT SobjectType, Field, Parent.Name, Parent.Profile.Name FROM FieldPermissions WHERE SobjectType IN ('Epic__c','Project_Stage__c','Milestone__c') ORDER BY Field"
+```
 
 ---
 
@@ -155,9 +182,8 @@ field doesn't exist. Confirm with:
 sf data query -o <org> -q "SELECT Field, Parent.Name FROM FieldPermissions WHERE SobjectType='Project_Stage__c'"
 ```
 
-In this repo, `Project_Stage__c.Display_Order__c` and `.Description__c` are still **not**
-on the Admin profile — smoke-test them through `getGanttData()` (system mode) instead of
-direct SOQL.
+This package now grants Admin FLS on all six optional fields, so it no longer bites
+here — but it's the first thing to check when adding a new field.
 
 **5. Anonymous Apex can't exercise `AuraHandledException` paths.** It surfaces as
 `System.LimitException: Can only throw this exception type from VisualForce or Aura

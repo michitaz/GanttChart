@@ -57,6 +57,11 @@
         <editable>true</editable>
         <readable>true</readable>
     </fieldPermissions>
+    <fieldPermissions>
+        <field>Milestone__c.Sort_Order__c</field>
+        <editable>true</editable>
+        <readable>true</readable>
+    </fieldPermissions>
 
     <classAccesses>
         <apexClass>EpicGanttController</apexClass>
