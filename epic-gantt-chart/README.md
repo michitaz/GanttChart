@@ -11,7 +11,7 @@ is in `force-app/`.
 
 ---
 
-## What's in the box
+## What's included
 
 ### Data model
 
@@ -103,15 +103,6 @@ one from both the permission set and the Admin profile:
 | `Project_Stage__c.System__c` | — | yes | yes |
 | `Milestone__c.Sort_Order__c` | Milestone | yes | yes |
 
-Four of these were on page layouts without Admin FLS, so an admin who wasn't assigned the
-permission set opened those records and simply didn't see the fields. The chart itself was
-unaffected — Apex runs in system mode and ignores FLS — which is exactly what makes this
-class of gap easy to miss. Verify after any new field with:
-
-```bash
-sf data query -o <org> -q "SELECT SobjectType, Field, Parent.Name, Parent.Profile.Name FROM FieldPermissions WHERE SobjectType IN ('Epic__c','Project_Stage__c','Milestone__c') ORDER BY Field"
-```
-
 ---
 
 ## Deploying to a new org
@@ -140,30 +131,14 @@ brand-new master-detail related list; deploy layouts in a second pass. See gotch
 
 ## Gotchas worth knowing
 
-**1. Brand-new custom field/relationship cache lag.** Right after deploying new objects
-and fields in one transaction, two things fail even though the schema is genuinely live
-(confirmed via `Schema.describe()`):
-
-- A Layout deploy referencing a new master-detail child's related list
-  (`<relatedList>Child__r</relatedList>`) fails with *"Cannot find related list"* —
-  retries over ~10 minutes didn't clear it.
-- Anonymous Apex referencing a brand-new field by dot notation fails to **compile**
-  (*"Field does not exist"*), even when other fields from the same deploy compile fine.
-  The Apex compiler's schema cache appears to warm per-field on first successful
-  compile, not on field creation.
-
-Both are Salesforce-side eventual consistency, not real errors; they normally clear
-within an hour. The Setup UI path (Object Manager → Page Layouts → drag the related list
-on) doesn't hit this cache and works immediately.
-
-**2. AutoNumber `startingNumber` is ignored on update.** `CustomObject.nameField` does
+AutoNumber `startingNumber` is ignored on update.** `CustomObject.nameField` does
 accept `<startingNumber>`, but Salesforce only honors it the moment the field is first
 converted from Text to AutoNumber. Redeploying an *already-AutoNumber* name field with a
 new starting number deploys cleanly and silently does nothing. Fix: deploy
 `<type>Text</type>` first, then redeploy `<type>AutoNumber</type>` with the desired
 `<startingNumber>` — the reconversion is treated as a fresh creation and seeds correctly.
 
-**3. Flow-type Quick Actions can't be deployed via Metadata API.** `optionsCreateFeedItem`
+Flow-type Quick Actions can't be deployed via Metadata API.** `optionsCreateFeedItem`
 on a `<type>Flow</type>` QuickAction is contradictory — the deploy rejects it as both
 *"cannot be set for type Flow"* (when present, at any value) and *"Required field is
 missing"* (when absent), deterministically. No XML combination passes. Create the action
@@ -172,7 +147,7 @@ deploy fine. `quickActions/Epic__c.Add_Stages_And_Milestones.quickAction-meta.xm
 included here for reference and for post-creation edits — expect it to fail on a first
 deploy into a fresh org.
 
-**4. New custom fields need Admin profile FLS explicitly.** Fields deployed with FLS only
+New custom fields need Admin profile FLS explicitly.** Fields deployed with FLS only
 on `Epic_Gantt_Chart_Access` are invisible to an admin who isn't assigned that permission
 set — everywhere except Apex, which ignores FLS. `sf data query`, `sf sobject describe`,
 and anonymous Apex all report `No such column 'Foo__c'`, which reads exactly like the
@@ -182,19 +157,13 @@ field doesn't exist. Confirm with:
 sf data query -o <org> -q "SELECT Field, Parent.Name FROM FieldPermissions WHERE SobjectType='Project_Stage__c'"
 ```
 
-This package now grants Admin FLS on all six optional fields, so it no longer bites
-here — but it's the first thing to check when adding a new field.
-
-**5. Anonymous Apex can't exercise `AuraHandledException` paths.** It surfaces as
+**Anonymous Apex can't exercise `AuraHandledException` paths.** It surfaces as
 `System.LimitException: Can only throw this exception type from VisualForce or Aura
 context`. Wrap smoke tests in `Database.setSavepoint()` / `Database.rollback(sp)` so you
 don't leave junk records on real Epics.
 
-**6. `@api` properties on Flow Screen components need explicit `targetConfigs`.** Flow's
-"auto-discover `@api` properties" doesn't work — without an explicit `<property>` tag,
-`recordId` errors with *"We can't find this input attribute."*
 
-**7. Existing stages often have a null `Display_Order__c`,** and `getGanttData` orders
+** Existing stages often have a null `Display_Order__c`,** and `getGanttData` orders
 `ASC NULLS LAST`, so pre-filling a new stage's Display Order with `1` sorts it above
 every existing stage. `_nextDisplayOrder` returns `''` unless at least one sibling
 already has a value.
