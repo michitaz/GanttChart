@@ -1,0 +1,45 @@
+:host {
+    --gridline: #e1e0d9;
+    --band: #f7f6f3;
+    --text-secondary: #52514e;
+}
+
+.builder-root {
+    max-height: 65vh;
+    overflow-y: auto;
+}
+
+.section-header {
+    margin-bottom: 0.5rem;
+}
+
+.row-card {
+    border: 1px solid var(--gridline);
+    border-radius: 0.5rem;
+    background-color: var(--band);
+    padding: 0.75rem 1rem 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.row-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.row-card-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.builder-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--gridline);
+}

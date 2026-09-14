@@ -1,0 +1,49 @@
+<template>
+    <div class="picker-root" onclick={handleRootClick}>
+        <span class="picker-label">{label}</span>
+        <button type="button" class={triggerClass} onclick={handleTriggerClick}>
+            <lightning-icon icon-name="utility:date_input" size="x-small" class="trigger-icon"></lightning-icon>
+            <span>{triggerLabel}</span>
+        </button>
+
+        <template if:true={isOpen}>
+            <div class="popover">
+                <div class="popover-header">
+                    <button type="button" class="nav-button" onclick={handlePrevMonth} title="Previous month">
+                        <lightning-icon icon-name="utility:chevronleft" size="x-small"></lightning-icon>
+                    </button>
+                    <span class="month-label">{monthLabel}</span>
+                    <button type="button" class="nav-button" onclick={handleNextMonth} title="Next month">
+                        <lightning-icon icon-name="utility:chevronright" size="x-small"></lightning-icon>
+                    </button>
+                </div>
+
+                <div class="weekday-row">
+                    <template for:each={weekdayLabels} for:item="wd">
+                        <span key={wd.key} class="weekday-cell">{wd.label}</span>
+                    </template>
+                </div>
+
+                <template for:each={calendarWeeks} for:item="week">
+                    <div key={week.key} class="week-row">
+                        <template for:each={week.days} for:item="day">
+                            <button
+                                key={day.key}
+                                type="button"
+                                class={day.cellClass}
+                                data-iso={day.iso}
+                                onclick={handleDayClick}
+                                onmouseenter={handleDayMouseEnter}
+                            >{day.dayNum}</button>
+                        </template>
+                    </div>
+                </template>
+
+                <div class="popover-footer">
+                    <button type="button" class="slds-button slds-button_neutral slds-button_stretch" onclick={handleClear}>Clear</button>
+                    <button type="button" class="slds-button slds-button_brand slds-button_stretch" onclick={handleDone}>Done</button>
+                </div>
+            </div>
+        </template>
+    </div>
+</template>

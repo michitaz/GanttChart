@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>65.0</apiVersion>
+    <interviewLabel>Add Project Stages and Milestones {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Add Project Stages and Milestones</label>
+    <processType>Flow</processType>
+    <status>Active</status>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Stage_Milestone_Screen</targetReference>
+        </connector>
+    </start>
+    <screens>
+        <name>Stage_Milestone_Screen</name>
+        <label>Add Project Stages and Milestones</label>
+        <locationX>50</locationX>
+        <locationY>120</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <showFooter>false</showFooter>
+        <fields>
+            <name>Stage_Milestone_Builder</name>
+            <extensionName>c:epicStageMilestoneBuilder</extensionName>
+            <fieldType>ComponentInstance</fieldType>
+            <inputParameters>
+                <name>recordId</name>
+                <value>
+                    <elementReference>recordId</elementReference>
+                </value>
+            </inputParameters>
+        </fields>
+    </screens>
+    <variables>
+        <name>recordId</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+</Flow>

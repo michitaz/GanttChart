@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Epic__c</fullName>
+    <label>Epic</label>
+    <type>MasterDetail</type>
+    <referenceTo>Epic__c</referenceTo>
+    <relationshipLabel>Milestones</relationshipLabel>
+    <relationshipName>Milestones</relationshipName>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
+    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+</CustomField>

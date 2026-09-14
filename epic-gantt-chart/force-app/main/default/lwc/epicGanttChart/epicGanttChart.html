@@ -1,0 +1,371 @@
+<template>
+    <lightning-card title="Project Timeline" icon-name="standard:timesheet_entry">
+        <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+            <template if:true={hasError}>
+                <div class="slds-text-color_error">{error}</div>
+            </template>
+
+            <template if:true={showFilterBar}>
+                <div class="filter-toolbar slds-m-bottom_small">
+                    <button type="button" class={filtersToggleClass} onclick={handleToggleFilters}>
+                        <lightning-icon icon-name="utility:filterList" size="xx-small"></lightning-icon>
+                        <span>{filtersToggleLabel}</span>
+                        <template if:true={activeFilterCount}>
+                            <span class="filter-count">{activeFilterCount}</span>
+                        </template>
+                    </button>
+                </div>
+            </template>
+
+            <template if:true={showFilterControls}>
+                <div class="filter-bar slds-m-bottom_small" onkeydown={handleFilterKeyDown}>
+                    <div class="filter-dropdown" onfocusout={handleFilterBlur}>
+                        <span class="filter-label">Stage Owner</span>
+                        <button
+                            type="button"
+                            class={ownerFilterClass}
+                            aria-haspopup="true"
+                            aria-expanded={isOwnerFilterOpen}
+                            onclick={handleToggleOwnerFilter}
+                        >
+                            <span>{ownerFilterLabel}</span>
+                            <lightning-icon icon-name="utility:down" size="xx-small"></lightning-icon>
+                        </button>
+                        <template if:true={isOwnerFilterOpen}>
+                            <div class="filter-menu" role="group" aria-label="Filter by stage owner">
+                                <template for:each={ownerOptions} for:item="opt">
+                                    <label key={opt.key} class="filter-option">
+                                        <input
+                                            type="checkbox"
+                                            data-value={opt.value}
+                                            checked={opt.checked}
+                                            onchange={handleOwnerOptionChange}
+                                        />
+                                        <span>{opt.label}</span>
+                                    </label>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div class="filter-dropdown" onfocusout={handleFilterBlur}>
+                        <span class="filter-label">System</span>
+                        <button
+                            type="button"
+                            class={systemFilterClass}
+                            aria-haspopup="true"
+                            aria-expanded={isSystemFilterOpen}
+                            onclick={handleToggleSystemFilter}
+                        >
+                            <span>{systemFilterLabel}</span>
+                            <lightning-icon icon-name="utility:down" size="xx-small"></lightning-icon>
+                        </button>
+                        <template if:true={isSystemFilterOpen}>
+                            <div class="filter-menu" role="group" aria-label="Filter by system">
+                                <template for:each={systemOptions} for:item="opt">
+                                    <label key={opt.key} class="filter-option">
+                                        <input
+                                            type="checkbox"
+                                            data-value={opt.value}
+                                            checked={opt.checked}
+                                            onchange={handleSystemOptionChange}
+                                        />
+                                        <span>{opt.label}</span>
+                                    </label>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+
+                    <c-date-range-picker
+                        label="Date Range"
+                        start-date={filterStartDate}
+                        end-date={filterEndDate}
+                        onrangechange={handleFilterRangeChange}
+                    ></c-date-range-picker>
+
+                    <template if:true={hasActiveFilters}>
+                        <button type="button" class="filter-clear" onclick={handleClearFilters}>
+                            Clear filters
+                        </button>
+                    </template>
+                </div>
+            </template>
+
+            <template if:true={noMatches}>
+                <p class="slds-text-color_weak">
+                    No stages or milestones match the current filters.
+                </p>
+            </template>
+
+            <template if:true={isEmpty}>
+                <p class="slds-text-color_weak">
+                    No project stages or milestones yet. Create the first one below, or add records
+                    to the Project Stages and Milestones related lists on this Epic.
+                </p>
+                <div class="empty-actions slds-m-top_small">
+                    <button class="slds-button slds-button_neutral" onclick={handleNewStage}>+ New Stage</button>
+                    <button class="slds-button slds-button_neutral" onclick={handleNewMilestone}>
+                        + New Milestone
+                    </button>
+                </div>
+            </template>
+
+            <template if:true={hasData}>
+                <div class="gantt-scroll" onscroll={handleHideTooltip}>
+                    <div class="gantt-grid" style={containerStyle}>
+                        <div class="stages-header" style={stagesHeaderStyle}>
+                            <span class="section-title">Stages</span>
+                            <button class="section-new-button" onclick={handleNewStage}>+ New Stage</button>
+                        </div>
+
+                        <template for:each={monthHeaderCells} for:item="cell">
+                            <div key={cell.key} class="month-cell" style={cell.style}>{cell.label}</div>
+                        </template>
+
+                        <template for:each={weekHeaderCells} for:item="cell">
+                            <div key={cell.key} class="week-cell" style={cell.style}>{cell.label}</div>
+                        </template>
+
+                        <template for:each={laneRows} for:item="lane">
+                            <div key={lane.key} class={lane.bandClass} style={lane.bandStyle}></div>
+                        </template>
+
+                        <template for:each={laneRows} for:item="lane">
+                            <div key={lane.key} class={lane.labelClass} style={lane.labelStyle}>
+                                <span class="lane-name" title={lane.label}>{lane.label}</span>
+                            </div>
+                        </template>
+
+                        <template for:each={stageRows} for:item="row">
+                            <div
+                                key={row.id}
+                                class="stage-bar"
+                                style={row.barStyle}
+                                data-id={row.id}
+                                role="button"
+                                tabindex="0"
+                                aria-label={row.ariaLabel}
+                                onclick={handleBarClick}
+                                onkeyup={handleBarKeyUp}
+                                onmouseenter={handleBarEnter}
+                                onmouseleave={handleHideTooltip}
+                                onfocus={handleBarEnter}
+                                onblur={handleHideTooltip}
+                            >
+                                <span class="stage-bar-label">{row.barLabel}</span>
+                            </div>
+                        </template>
+
+                        <div class="milestones-label" style={milestonesLabelStyle}>
+                            <span class="section-title milestone-section-title">Milestones</span>
+                            <button class="section-new-button milestone-new-button" onclick={handleNewMilestone}>
+                                + New Milestone
+                            </button>
+                        </div>
+                        <div class="milestone-axis-filler" style={milestoneAxisStyle}></div>
+
+                        <template if:true={hasMilestones}>
+                            <template for:each={milestoneColumns} for:item="col">
+                                <div key={col.key} class="milestone-stack" style={col.style}>
+                                    <template for:each={col.markers} for:item="marker">
+                                        <div
+                                            key={marker.id}
+                                            class="milestone-marker"
+                                            data-id={marker.id}
+                                            onmouseenter={handleMilestoneEnter}
+                                            onmouseleave={handleHideTooltip}
+                                        >
+                                            <div
+                                                class="milestone-hit"
+                                                data-id={marker.id}
+                                                role="button"
+                                                tabindex="0"
+                                                aria-label={marker.ariaLabel}
+                                                onclick={handleMilestoneClick}
+                                                onkeyup={handleMilestoneKeyUp}
+                                                onfocus={handleMilestoneEnter}
+                                                onblur={handleHideTooltip}
+                                            >
+                                                <div class="milestone-diamond"></div>
+                                                <div class="milestone-date">{marker.dateLabel}</div>
+                                            </div>
+                                            <div class="milestone-desc">{marker.description}</div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </template>
+                    </div>
+                </div>
+
+                <template if:true={legend.length}>
+                    <div class="legend slds-m-top_medium">
+                        <span class="legend-title">Phase</span>
+                        <template for:each={legend} for:item="item">
+                            <span key={item.key} class="legend-item">
+                                <span class="legend-swatch" style={item.style}></span>
+                                <span class="legend-label">{item.owner}</span>
+                            </span>
+                        </template>
+                    </div>
+                </template>
+            </template>
+        </div>
+    </lightning-card>
+
+    <template if:true={tooltip}>
+        <div class={tooltipClass} style={tooltipStyle} role="tooltip">
+            <div class="bar-tooltip-name">{tooltip.name}</div>
+            <template if:true={tooltip.dateRange}>
+                <div class="bar-tooltip-row">{tooltip.dateRange}</div>
+            </template>
+            <template if:true={tooltip.owner}>
+                <div class="bar-tooltip-row">Owner: {tooltip.owner}</div>
+            </template>
+            <template if:true={tooltip.description}>
+                <div class="bar-tooltip-desc">{tooltip.description}</div>
+            </template>
+        </div>
+    </template>
+
+    <template if:true={isModalOpen}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open" aria-modal="true">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button
+                        class="slds-button slds-button_icon slds-modal__close"
+                        title="Close"
+                        onclick={closeModal}
+                    >
+                        <lightning-icon icon-name="utility:close" size="small" alternative-text="Close"></lightning-icon>
+                    </button>
+                    <h2 class="slds-modal__title slds-hyphenate">{stageModalTitle}</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <template if:true={modalError}>
+                        <div class="slds-text-color_error slds-m-bottom_small">{modalError}</div>
+                    </template>
+                    <lightning-input
+                        type="text"
+                        label="Stage Name"
+                        required
+                        max-length="255"
+                        value={modalStageName}
+                        onchange={handleStageNameChange}
+                        class="slds-m-bottom_small"
+                    ></lightning-input>
+                    <lightning-input
+                        type="date"
+                        label="Start Date"
+                        value={modalStartDate}
+                        onchange={handleStartDateChange}
+                        class="slds-m-bottom_small"
+                    ></lightning-input>
+                    <lightning-input
+                        type="date"
+                        label="End Date"
+                        value={modalEndDate}
+                        onchange={handleEndDateChange}
+                        class="slds-m-bottom_small"
+                    ></lightning-input>
+                    <lightning-input
+                        type="text"
+                        label="Stage Owner"
+                        value={modalOwner}
+                        onchange={handleOwnerChange}
+                        class="slds-m-bottom_small"
+                    ></lightning-input>
+                    <lightning-input
+                        type="text"
+                        label="System"
+                        max-length="255"
+                        field-level-help="Groups the stage into a swim lane on the chart."
+                        value={modalSystem}
+                        onchange={handleSystemChange}
+                        class="slds-m-bottom_small"
+                    ></lightning-input>
+                    <lightning-textarea
+                        label="Description"
+                        value={modalDescription}
+                        onchange={handleDescriptionChange}
+                        class="slds-m-bottom_small"
+                    ></lightning-textarea>
+                    <template if:true={isStageCreate}>
+                        <lightning-input
+                            type="number"
+                            label="Display Order"
+                            step="1"
+                            field-level-help="Orders the stage rows in the chart, lowest first. Leave blank to sort last."
+                            value={modalDisplayOrder}
+                            onchange={handleDisplayOrderChange}
+                        ></lightning-input>
+                    </template>
+                </div>
+                <footer class="slds-modal__footer">
+                    <button class="slds-button slds-button_neutral" onclick={closeModal}>Cancel</button>
+                    <button class="slds-button slds-button_brand" onclick={handleSave} disabled={modalSaving}>Save</button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+    <template if:true={isMilestoneModalOpen}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open" aria-modal="true">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button
+                        class="slds-button slds-button_icon slds-modal__close"
+                        title="Close"
+                        onclick={closeMilestoneModal}
+                    >
+                        <lightning-icon icon-name="utility:close" size="small" alternative-text="Close"></lightning-icon>
+                    </button>
+                    <h2 class="slds-modal__title slds-hyphenate">{milestoneModalTitle}</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <template if:true={milestoneModalError}>
+                        <div class="slds-text-color_error slds-m-bottom_small">{milestoneModalError}</div>
+                    </template>
+                    <lightning-input
+                        type="date"
+                        label="Due Date"
+                        required
+                        value={milestoneModalDueDate}
+                        onchange={handleMilestoneDueDateChange}
+                        class="slds-m-bottom_small"
+                    ></lightning-input>
+                    <lightning-input
+                        type="text"
+                        label="Milestone Description"
+                        required
+                        max-length="255"
+                        value={milestoneModalDescription}
+                        onchange={handleMilestoneDescriptionChange}
+                        class="slds-m-bottom_small"
+                    ></lightning-input>
+                    <lightning-input
+                        type="number"
+                        label="Sort Order"
+                        step="1"
+                        field-level-help="Orders milestones that share a Due Date, lowest first. Leave blank to sort last."
+                        value={milestoneModalSortOrder}
+                        onchange={handleMilestoneSortOrderChange}
+                    ></lightning-input>
+                </div>
+                <footer class="slds-modal__footer">
+                    <button class="slds-button slds-button_neutral" onclick={closeMilestoneModal}>Cancel</button>
+                    <button
+                        class="slds-button slds-button_brand"
+                        onclick={handleMilestoneSave}
+                        disabled={milestoneModalSaving}
+                    >
+                        Save
+                    </button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>All</fullName>
+    <label>All Milestones</label>
+    <filterScope>Everything</filterScope>
+    <columns>NAME</columns>
+    <columns>Epic__c</columns>
+    <columns>Due_Date__c</columns>
+    <columns>Milestone_Description__c</columns>
+</ListView>

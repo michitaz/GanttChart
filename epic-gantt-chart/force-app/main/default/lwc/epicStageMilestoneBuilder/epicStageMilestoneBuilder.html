@@ -1,0 +1,143 @@
+<template>
+    <div class="builder-root slds-p-around_medium">
+        <template if:true={saveError}>
+            <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error slds-m-bottom_medium" role="alert">
+                {saveError}
+            </div>
+        </template>
+
+        <div class="section-header">
+            <h2 class="slds-text-heading_small">Project Stages</h2>
+        </div>
+
+        <template for:each={stageRowsView} for:item="row">
+            <div key={row.key} class="row-card">
+                <div class="row-card-header">
+                    <span class="row-card-title">Stage {row.index}</span>
+                    <template if:true={canRemoveStage}>
+                        <button
+                            type="button"
+                            class="slds-button slds-button_icon"
+                            title="Remove stage"
+                            data-key={row.key}
+                            onclick={handleRemoveStage}
+                        >
+                            <lightning-icon icon-name="utility:delete" size="x-small" alternative-text="Remove"></lightning-icon>
+                        </button>
+                    </template>
+                </div>
+
+                <div class="slds-grid slds-wrap slds-gutters_small">
+                    <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                        <label class="slds-form-element__label" for={row.key}>Stage Name</label>
+                        <input
+                            type="text"
+                            class={row.nameClass}
+                            value={row.name}
+                            data-key={row.key}
+                            onchange={handleStageNameChange}
+                        />
+                    </div>
+                    <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                        <label class="slds-form-element__label">Stage Owner</label>
+                        <input
+                            type="text"
+                            class={row.ownerClass}
+                            value={row.owner}
+                            data-key={row.key}
+                            onchange={handleStageOwnerChange}
+                        />
+                    </div>
+                    <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                        <label class="slds-form-element__label">System</label>
+                        <input
+                            type="text"
+                            class={row.systemClass}
+                            value={row.system}
+                            data-key={row.key}
+                            onchange={handleStageSystemChange}
+                        />
+                    </div>
+                    <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                        <c-date-range-picker
+                            label="Start – End Date"
+                            start-date={row.startDate}
+                            end-date={row.endDate}
+                            data-key={row.key}
+                            onrangechange={handleStageDatesChange}
+                        ></c-date-range-picker>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1">
+                        <label class="slds-form-element__label">Description</label>
+                        <textarea
+                            class="slds-textarea"
+                            data-key={row.key}
+                            onchange={handleStageDescriptionChange}
+                        >{row.description}</textarea>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <button type="button" class="slds-button slds-button_neutral slds-m-bottom_large" onclick={handleAddStage}>
+            <lightning-icon icon-name="utility:add" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+            Add Project Stage
+        </button>
+
+        <div class="section-header">
+            <h2 class="slds-text-heading_small">Milestones</h2>
+        </div>
+
+        <template for:each={milestoneRowsView} for:item="row">
+            <div key={row.key} class="row-card">
+                <div class="row-card-header">
+                    <span class="row-card-title">Milestone {row.index}</span>
+                    <template if:true={canRemoveMilestone}>
+                        <button
+                            type="button"
+                            class="slds-button slds-button_icon"
+                            title="Remove milestone"
+                            data-key={row.key}
+                            onclick={handleRemoveMilestone}
+                        >
+                            <lightning-icon icon-name="utility:delete" size="x-small" alternative-text="Remove"></lightning-icon>
+                        </button>
+                    </template>
+                </div>
+
+                <div class="slds-grid slds-wrap slds-gutters_small">
+                    <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                        <label class="slds-form-element__label">Due Date</label>
+                        <input
+                            type="date"
+                            class={row.dateClass}
+                            value={row.dueDate}
+                            data-key={row.key}
+                            onchange={handleMilestoneDueDateChange}
+                        />
+                    </div>
+                    <div class="slds-col slds-size_1-of-1">
+                        <label class="slds-form-element__label">Milestone Description</label>
+                        <textarea
+                            class="slds-textarea"
+                            data-key={row.key}
+                            onchange={handleMilestoneDescriptionChange}
+                        >{row.description}</textarea>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <button type="button" class="slds-button slds-button_neutral slds-m-bottom_large" onclick={handleAddMilestone}>
+            <lightning-icon icon-name="utility:add" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+            Add Milestone
+        </button>
+
+        <div class="builder-footer">
+            <button type="button" class="slds-button slds-button_neutral" onclick={handleCancel}>Cancel</button>
+            <button type="button" class="slds-button slds-button_brand" onclick={handleSave} disabled={isSaving}>
+                Save
+            </button>
+        </div>
+    </div>
+</template>

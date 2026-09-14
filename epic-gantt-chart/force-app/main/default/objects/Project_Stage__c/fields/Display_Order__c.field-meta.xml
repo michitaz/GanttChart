@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Display_Order__c</fullName>
+    <label>Display Order</label>
+    <type>Number</type>
+    <precision>3</precision>
+    <scale>0</scale>
+    <description>Controls the row order of this stage in the Gantt chart. Stages without a value sort last, by Start Date.</description>
+</CustomField>
